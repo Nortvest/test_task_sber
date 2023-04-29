@@ -8,17 +8,29 @@ def get_optimal_distances_between_cash_machines(n: int, k: int, *args) -> list:
     :param args: Расстояния между соседними банкоматами.
     :return: Список с новыми расстояниями между соседними банкоматами
     """
-    assert len(args) == n-1, ValueError('Количество расстояний должно быть равно количеству банкоматами')
+    if len(args) >= n:  # Фильтр ненужных расстояний
+        args = args[:n-1]
 
-    distances = list(args)
+    new_distances = []
 
-    for cash_machine in range(k):
-        max_distance = max(distances)
-        half_max_distance = max_distance / 2  # Новое расстояние до следующего банкомата
-        index_max_distance = distances.index(max_distance)
-        distances[index_max_distance] = half_max_distance  # Заменяет расстояние до следующего банкомата
-        distances.insert(index_max_distance + 1, half_max_distance)  # Расстояние от нового банкомата до следующего
-    return distances
+    # Максимальные k расстояний с их изначальными индексами и количеством разделений [[0, 100, 1], [1, 180, 1]]
+    max_distances = sorted(zip(range(len(args)), args), reverse=True, key=lambda x: x[1])[:k]
+    max_distances = [[i, distance, 1] for i, distance in max_distances]
+
+    for i in range(k):
+        # Выделяем наибольшее расстояние между банкоматами без сохранения в основной список
+        distances = [[i, distance / div] for i, (_, distance, div) in enumerate(max_distances)]
+        index_max_distance = max(distances, key=lambda x: x[1])[0]  # Argmax
+        max_distances[index_max_distance][2] += 1  # Увеличиваем счетчик делимости на 1
+
+    max_distances = {i: [distance, div] for i, distance, div in max_distances}
+    for i in range(n-1):  # Формируем финальный список расстояний
+        if i in max_distances.keys():
+            distance, div = max_distances[i]
+            new_distances.extend([distance / div] * div)
+        else:
+            new_distances.append(args[i])
+    return new_distances
 
 
 if __name__ == '__main__':
